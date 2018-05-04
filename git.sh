@@ -45,7 +45,7 @@ function stg-get-patch-ids()
     fi
     
     for _pname in $(stg series $branch_arg --noprefix) ; do
-	_pid=$(stg sh $branch_arg $_pname | git patch-id --stable | awk '{print $1;}') ;
+	_pid=$(stg show $branch_arg $_pname | git patch-id --stable | awk '{print $1;}') ;
 	if [[ -z "$_result" ]] ; then
 	    _result="$_pname,$_pid"
 	else
