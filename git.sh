@@ -45,7 +45,7 @@ function stg-get-patch-ids()
     fi
     
     for _pname in $(stg series $branch_arg --noprefix) ; do
-	_pid=$(stg sh $branch_arg $_pname | git patch-id --stable | awk '{print $1;}') ;
+	_pid=$(stg show $branch_arg $_pname | git patch-id --stable | awk '{print $1;}') ;
 	if [[ -z "$_result" ]] ; then
 	    _result="$_pname,$_pid"
 	else
@@ -69,8 +69,8 @@ function git-get-patch-ids()
     local _pid
     local _result
 
-    for _cid in $(git log ${from}..${to} | awk '{print $1;}') ; do
-	_pid=$(git sh $_cid | git patch-id --stable | awk '{print $1;}')
+    for _cid in $(git rev-list --no-merges ${from}..${to}) ; do
+	_pid=$(git diff-tree --patch $_cid | git patch-id --stable | awk '{print $1;}')
 	if [[ -z "$_result" ]] ; then
 	    _result="$_cid,$_pid"
 	else
@@ -89,8 +89,13 @@ function find-duplicate-patch-ids()
     
     local _result
 
+    # remove duplicates from upstream_pids
+    local pids
+    pids="$(for i in $upstream_pids; do echo "upstream,${i#*,}"; done)"
+    pids="$(sort -u <<<"$pids")"
+
     # Change space to newline, comma to space
-    _result=$((for i in $upstream_pids $series_pids ; do echo ${i/,/ } ; done ) |
+    _result=$((for i in $pids $series_pids ; do echo ${i/,/ } ; done ) |
 		  sort -k 2 -r |
 		  uniq -f 1 -d |
 		  awk '{print $1}')
